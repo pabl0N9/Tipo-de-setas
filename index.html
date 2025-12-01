@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clasificador de Hongos</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --accent: #38bdf8;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --danger: #f87171;
+      --safe: #34d399;
+      --border: #1f2937;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      background: radial-gradient(140% 140% at 20% 20%, #1f2937 0%, #0b1120 40%, #030712 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      padding: 32px 24px 12px;
+      text-align: center;
+    }
+    h1 { margin: 0; font-size: 28px; letter-spacing: -0.5px; }
+    p { margin: 4px 0 0; color: var(--muted); }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto 48px;
+      padding: 0 24px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #0b1220;
+      color: var(--text);
+      outline: none;
+    }
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
+    }
+    .actions {
+      margin-top: 20px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 12px 18px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      color: #0b1120;
+      background: var(--accent);
+      transition: transform 0.08s ease, box-shadow 0.1s ease;
+    }
+    button:hover { transform: translateY(-1px); box-shadow: 0 10px 30px rgba(56, 189, 248, 0.35); }
+    button:active { transform: translateY(0); box-shadow: none; }
+    #result {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #0b1220;
+      display: none;
+    }
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+      margin-right: 10px;
+      color: #0b1120;
+    }
+    .safe { background: var(--safe); }
+    .danger { background: var(--danger); }
+    small { color: var(--muted); }
+    .footer {
+      text-align: center;
+      color: var(--muted);
+      padding: 0 0 28px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Clasificador de Hongos</h1>
+    <p>Ingresa las características y obtén una predicción instantánea.</p>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <form id="mushroom-form">
+        <div class="grid">
+          <div>
+            <label for="odor">Olor</label>
+            <select id="odor" name="odor">
+              <option value="n">Ninguno (n)</option>
+              <option value="a">Almendra (a)</option>
+              <option value="l">Anis (l)</option>
+              <option value="c">Creosota (c)</option>
+              <option value="y">Pescado (y)</option>
+              <option value="f">Fetido (f)</option>
+              <option value="m">Moho (m)</option>
+              <option value="p">Picante (p)</option>
+              <option value="s">Dulce (s)</option>
+            </select>
+          </div>
+          <div>
+            <label for="spore-print-color">Color de esporas</label>
+            <select id="spore-print-color" name="spore-print-color">
+              <option value="k">Negro (k)</option>
+              <option value="n">Cafe (n)</option>
+              <option value="b">Buff (b)</option>
+              <option value="h">Chocolate (h)</option>
+              <option value="w">Blanco (w)</option>
+              <option value="r">Verde (r)</option>
+              <option value="o">Naranja (o)</option>
+              <option value="u">Purpura (u)</option>
+              <option value="y">Amarillo (y)</option>
+            </select>
+          </div>
+          <div>
+            <label for="bruises">Moretones</label>
+            <select id="bruises" name="bruises">
+              <option value="t">Si (t)</option>
+              <option value="f">No (f)</option>
+            </select>
+          </div>
+          <div>
+            <label for="gill-size">Tamaño de lamina</label>
+            <select id="gill-size" name="gill-size">
+              <option value="b">Ancha (b)</option>
+              <option value="n">Estrecha (n)</option>
+            </select>
+          </div>
+          <div>
+            <label for="cap-shape">Forma del sombrero</label>
+            <select id="cap-shape" name="cap-shape">
+              <option value="x">Convexo (x)</option>
+              <option value="b">Campana (b)</option>
+              <option value="c">Conico (c)</option>
+              <option value="f">Plano (f)</option>
+              <option value="k">Con protuberancia (k)</option>
+              <option value="s">Hundido (s)</option>
+            </select>
+          </div>
+          <div>
+            <label for="cap-surface">Superficie sombrero</label>
+            <select id="cap-surface" name="cap-surface">
+              <option value="s">Suave (s)</option>
+              <option value="f">Fibrosa (f)</option>
+              <option value="g">Acanalada (g)</option>
+              <option value="y">Escamosa (y)</option>
+            </select>
+          </div>
+          <div>
+            <label for="cap-color">Color sombrero</label>
+            <select id="cap-color" name="cap-color">
+              <option value="n">Cafe (n)</option>
+              <option value="b">Buff (b)</option>
+              <option value="c">Canela (c)</option>
+              <option value="g">Gris (g)</option>
+              <option value="r">Verde (r)</option>
+              <option value="p">Rosa (p)</option>
+              <option value="u">Purpura (u)</option>
+              <option value="e">Rojo (e)</option>
+              <option value="w">Blanco (w)</option>
+              <option value="y">Amarillo (y)</option>
+            </select>
+          </div>
+          <div>
+            <label for="gill-attachment">Union lamina</label>
+            <select id="gill-attachment" name="gill-attachment">
+              <option value="f">Libre (f)</option>
+              <option value="a">Adherida (a)</option>
+              <option value="d">Descendente (d)</option>
+              <option value="n">Escotada (n)</option>
+            </select>
+          </div>
+          <div>
+            <label for="gill-spacing">Separacion lamina</label>
+            <select id="gill-spacing" name="gill-spacing">
+              <option value="c">Cercana (c)</option>
+              <option value="w">Densa (w)</option>
+              <option value="d">Lejana (d)</option>
+            </select>
+          </div>
+          <div>
+            <label for="gill-color">Color lamina</label>
+            <select id="gill-color" name="gill-color">
+              <option value="k">Negro (k)</option>
+              <option value="n">Cafe (n)</option>
+              <option value="b">Buff (b)</option>
+              <option value="h">Chocolate (h)</option>
+              <option value="g">Gris (g)</option>
+              <option value="r">Verde (r)</option>
+              <option value="o">Naranja (o)</option>
+              <option value="p">Rosa (p)</option>
+              <option value="u">Purpura (u)</option>
+              <option value="e">Rojo (e)</option>
+              <option value="w">Blanco (w)</option>
+              <option value="y">Amarillo (y)</option>
+            </select>
+          </div>
+          <div>
+            <label for="stalk-shape">Forma tallo</label>
+            <select id="stalk-shape" name="stalk-shape">
+              <option value="e">Ensanchado (e)</option>
+              <option value="t">Afilado (t)</option>
+            </select>
+          </div>
+          <div>
+            <label for="stalk-root">Raiz tallo</label>
+            <select id="stalk-root" name="stalk-root">
+              <option value="b">Bulbosa (b)</option>
+              <option value="c">Club (c)</option>
+              <option value="u">Copa (u)</option>
+              <option value="e">Igual (e)</option>
+              <option value="z">Rizomorfas (z)</option>
+              <option value="r">Enraizada (r)</option>
+            </select>
+          </div>
+          <div>
+            <label for="stalk-surface-above-ring">Superficie tallo arriba del anillo</label>
+            <select id="stalk-surface-above-ring" name="stalk-surface-above-ring">
+              <option value="s">Suave (s)</option>
+              <option value="f">Fibrosa (f)</option>
+              <option value="y">Escamosa (y)</option>
+              <option value="k">Sedosa (k)</option>
+            </select>
+          </div>
+          <div>
+            <label for="stalk-surface-below-ring">Superficie tallo bajo anillo</label>
+            <select id="stalk-surface-below-ring" name="stalk-surface-below-ring">
+              <option value="s">Suave (s)</option>
+              <option value="f">Fibrosa (f)</option>
+              <option value="y">Escamosa (y)</option>
+              <option value="k">Sedosa (k)</option>
+            </select>
+          </div>
+          <div>
+            <label for="stalk-color-above-ring">Color tallo arriba anillo</label>
+            <select id="stalk-color-above-ring" name="stalk-color-above-ring">
+              <option value="w">Blanco (w)</option>
+              <option value="n">Cafe (n)</option>
+              <option value="b">Buff (b)</option>
+              <option value="c">Canela (c)</option>
+              <option value="g">Gris (g)</option>
+              <option value="o">Naranja (o)</option>
+              <option value="p">Rosa (p)</option>
+              <option value="e">Rojo (e)</option>
+              <option value="y">Amarillo (y)</option>
+            </select>
+          </div>
+          <div>
+            <label for="stalk-color-below-ring">Color tallo bajo anillo</label>
+            <select id="stalk-color-below-ring" name="stalk-color-below-ring">
+              <option value="w">Blanco (w)</option>
+              <option value="n">Cafe (n)</option>
+              <option value="b">Buff (b)</option>
+              <option value="c">Canela (c)</option>
+              <option value="g">Gris (g)</option>
+              <option value="o">Naranja (o)</option>
+              <option value="p">Rosa (p)</option>
+              <option value="e">Rojo (e)</option>
+              <option value="y">Amarillo (y)</option>
+            </select>
+          </div>
+          <div>
+            <label for="veil-type">Tipo de velo</label>
+            <select id="veil-type" name="veil-type">
+              <option value="p">Parcial (p)</option>
+              <option value="u">Universal (u)</option>
+            </select>
+          </div>
+          <div>
+            <label for="veil-color">Color del velo</label>
+            <select id="veil-color" name="veil-color">
+              <option value="w">Blanco (w)</option>
+              <option value="n">Cafe (n)</option>
+              <option value="o">Naranja (o)</option>
+              <option value="y">Amarillo (y)</option>
+            </select>
+          </div>
+          <div>
+            <label for="ring-number">Numero de anillos</label>
+            <select id="ring-number" name="ring-number">
+              <option value="o">Uno (o)</option>
+              <option value="t">Dos (t)</option>
+              <option value="n">Ninguno (n)</option>
+            </select>
+          </div>
+          <div>
+            <label for="ring-type">Tipo de anillo</label>
+            <select id="ring-type" name="ring-type">
+              <option value="p">Colgante (p)</option>
+              <option value="e">Evanescente (e)</option>
+              <option value="f">Acampanado (f)</option>
+              <option value="l">Grande (l)</option>
+              <option value="s">Vaina (s)</option>
+              <option value="z">Zona (z)</option>
+              <option value="c">Telarana (c)</option>
+              <option value="n">Ninguno (n)</option>
+            </select>
+          </div>
+          <div>
+            <label for="population">Poblacion</label>
+            <select id="population" name="population">
+              <option value="v">Varias (v)</option>
+              <option value="a">Abundante (a)</option>
+              <option value="c">Agrupada (c)</option>
+              <option value="n">Numerosa (n)</option>
+              <option value="s">Dispersa (s)</option>
+              <option value="y">Solitario (y)</option>
+            </select>
+          </div>
+          <div>
+            <label for="habitat">Habitat</label>
+            <select id="habitat" name="habitat">
+              <option value="d">Bosque/Disturbado (d)</option>
+              <option value="g">Hierba (g)</option>
+              <option value="l">Hojas (l)</option>
+              <option value="m">Pradera (m)</option>
+              <option value="p">Senderos (p)</option>
+              <option value="u">Desecho (u)</option>
+              <option value="w">Bosque (w)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" onclick="predict()">Clasificar hongo</button>
+        </div>
+      </form>
+
+      <div id="result"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <small>La prediccion se basa en el dataset de hongos de UCI.</small>
+  </div>
+
+  <script>
+    async function predict() {
+      const form = document.getElementById("mushroom-form");
+      const data = {};
+      Array.from(form.elements).forEach(el => {
+        if (el.name) data[el.name] = el.value;
+      });
+
+      const resultDiv = document.getElementById("result");
+      resultDiv.style.display = "block";
+      resultDiv.innerHTML = "<small>Calculando...</small>";
+
+      try {
+        const res = await fetch("/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        const json = await res.json();
+        if (json.status !== "success") throw new Error(json.message || "Error");
+
+        const pred = json.prediction;
+        const isEdible = pred.prediction === "e";
+        const confidence = (pred.confidence * 100).toFixed(2);
+        const pEdible = (pred.probability_edible * 100).toFixed(2);
+        const pPoison = (pred.probability_poisonous * 100).toFixed(2);
+
+        resultDiv.innerHTML = `
+          <span class="badge ${isEdible ? "safe" : "danger"}">
+            ${isEdible ? "COMESTIBLE" : "VENENOSO"}
+          </span>
+          <div><strong>Confianza:</strong> ${confidence}%</div>
+          <div><strong>Prob. comestible:</strong> ${pEdible}%</div>
+          <div><strong>Prob. venenoso:</strong> ${pPoison}%</div>
+        `;
+      } catch (err) {
+        resultDiv.innerHTML = `<span class="badge danger">ERROR</span> ${err.message}`;
+      }
+    }
+  </script>
+</body>
+</html>
