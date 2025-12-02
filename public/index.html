@@ -371,7 +371,10 @@
   </div>
 
   <script>
-    const remoteApi = "https://tipo-de-setas-qfz1.vercel.app";
+    const remoteCandidates = [
+      "https://tipo-de-setas-qfz1.vercel.app",
+      "https://tipo-de-setas.onrender.com"
+    ];
     let cachedApiUrl = null;
 
     async function resolveApiUrl() {
@@ -382,7 +385,7 @@
       if (!window.location.origin.startsWith("file:")) {
         candidates.push("");
       }
-      candidates.push(remoteApi);
+      candidates.push(...remoteCandidates);
 
       for (const base of candidates) {
         const url = `${base}/api/predict`;
