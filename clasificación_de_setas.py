@@ -1,4 +1,5 @@
 import argparse
+import os
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
@@ -66,7 +67,7 @@ class MushroomClassifier:
     def predict(self, input_data: Dict) -> Dict:
         """Recibe un diccionario con las caracteristicas del hongo y devuelve prediccion."""
         input_df = pd.DataFrame([input_data])
-        encoded = pd.get_dummies(input_df, prefix_sep="_", drop_first=True)
+        encoded = pd.get_dummies(input_df, prefix_sep="_", drop_first=False)
 
         # Asegurar todas las columnas esperadas
         for col in self.feature_names:
@@ -105,13 +106,17 @@ def clean_dataset(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def encode_features(df: pd.DataFrame) -> Tuple[pd.DataFrame, np.ndarray, LabelEncoder]:
-    """Codifica la columna objetivo y aplica one-hot encoding a las features."""
+    """Codifica la columna objetivo y aplica one-hot encoding a las features.
+
+    No descartamos ninguna categoria (sin drop_first) para mantener el mismo
+    espacio de features entre entrenamiento e inferencia.
+    """
     if "class" not in df.columns:
         raise ValueError("La columna 'class' no esta en el DataFrame.")
 
     label_encoder = LabelEncoder()
     y = label_encoder.fit_transform(df["class"])
-    X = pd.get_dummies(df.drop(columns=["class"]), prefix_sep="_", drop_first=True)
+    X = pd.get_dummies(df.drop(columns=["class"]), prefix_sep="_", drop_first=False)
 
     print(f"Features despues de one-hot: {X.shape[1]}")
     print(f"Distribucion de clases: {np.bincount(y) / len(y)}")
@@ -198,18 +203,24 @@ def create_app(classifier: MushroomClassifier):
     app = Flask(__name__)
 
     @app.route("/health")
+    @app.route("/api/health")
     def health():
         return jsonify({"status": "ok"})
 
-    @app.route("/predict", methods=["POST"])
+    @app.route("/predict", methods=["GET", "POST"])
+    @app.route("/api/predict", methods=["GET", "POST"])
     def predict_endpoint():
+        if request.method == "GET":
+            return jsonify({"status": "ok", "message": "POST to this endpoint with mushroom features."})
+
         payload = request.get_json(force=True)
         result = classifier.predict(payload)
         return jsonify({"status": "success", "prediction": result})
 
     @app.route("/")
     def index():
-        index_path = Path(__file__).parent / "index.html"
+        # Servimos el HTML del front desde la carpeta public
+        index_path = Path(__file__).parent / "public" / "index.html"
         return send_file(index_path)
 
     return app
@@ -218,13 +229,14 @@ def create_app(classifier: MushroomClassifier):
 def run_api(classifier: MushroomClassifier, port: int = 5000, use_ngrok: bool = False):
     """Inicia la API Flask. Ngrok es opcional y requiere flask-ngrok instalado."""
     app = create_app(classifier)
+    port = int(os.environ.get("PORT", port))
     if use_ngrok:
         try:
             from flask_ngrok import run_with_ngrok
         except ImportError:
             raise ImportError("Instala flask-ngrok o ejecuta sin --use-ngrok.")
         run_with_ngrok(app)
-    app.run(port=port)
+    app.run(host="0.0.0.0", port=port)
 
 
 def parse_args():

@@ -1,4 +1,4 @@
-"""Serverless predictor for Vercel Python runtime."""
+"""HTTP predictor handler for the mushroom classifier API."""
 
 import json
 from http.server import BaseHTTPRequestHandler
