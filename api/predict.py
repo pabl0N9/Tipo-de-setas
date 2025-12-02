@@ -10,6 +10,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
 
 DATA_URL = "https://archive.ics.uci.edu/ml/machine-learning-databases/mushroom/agaricus-lepiota.data"
+API_VERSION = "v1-no-drop-first"
 
 COLUMN_NAMES = [
     "class",
@@ -55,9 +56,10 @@ def clean_dataset(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def encode_features(df: pd.DataFrame) -> Tuple[pd.DataFrame, np.ndarray, LabelEncoder]:
+    """Codifica sin drop_first para que todas las categorías estén disponibles en inferencia."""
     label_encoder = LabelEncoder()
     y = label_encoder.fit_transform(df["class"])
-    X = pd.get_dummies(df.drop(columns=["class"]), prefix_sep="_", drop_first=True)
+    X = pd.get_dummies(df.drop(columns=["class"]), prefix_sep="_")
     return X, y, label_encoder
 
 
@@ -77,7 +79,8 @@ MODEL, FEATURE_NAMES, LABEL_ENCODER = train_model()
 
 def predict_one(input_data: Dict) -> Dict:
     input_df = pd.DataFrame([input_data])
-    encoded = pd.get_dummies(input_df, prefix_sep="_", drop_first=True)
+    # No usamos drop_first para preservar las columnas usadas en entrenamiento
+    encoded = pd.get_dummies(input_df, prefix_sep="_")
 
     for col in FEATURE_NAMES:
         if col not in encoded.columns:
@@ -110,7 +113,11 @@ class handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         self._set_headers(200)
-        message = {"status": "ok", "message": "POST to this endpoint with mushroom features."}
+        message = {
+            "status": "ok",
+            "message": "POST to this endpoint with mushroom features.",
+            "version": API_VERSION,
+        }
         self.wfile.write(json.dumps(message).encode())
 
     def do_POST(self):
@@ -120,10 +127,10 @@ class handler(BaseHTTPRequestHandler):
         try:
             payload = json.loads(raw_body) if raw_body else {}
             result = predict_one(payload)
-            response = {"status": "success", "prediction": result}
+            response = {"status": "success", "version": API_VERSION, "prediction": result}
             self._set_headers(200)
             self.wfile.write(json.dumps(response).encode())
         except Exception as exc:  # noqa: BLE001
             self._set_headers(400)
-            error_message = {"status": "error", "message": str(exc)}
+            error_message = {"status": "error", "version": API_VERSION, "message": str(exc)}
             self.wfile.write(json.dumps(error_message).encode())
